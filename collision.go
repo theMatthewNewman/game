@@ -4,8 +4,8 @@ import (
 	"math"
 	"sort"
 
-	"github.com/thematthewnewman/game/raycaster"
-	"github.com/thematthewnewman/game/raycaster/geom"
+	"github.com/thematthewnewman/game/raycaster-go"
+	"github.com/thematthewnewman/game/raycaster-go/geom"
 )
 
 type EntityCollision struct {
