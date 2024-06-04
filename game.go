@@ -27,33 +27,34 @@ const (
 )
 
 type Game struct {
-	tex                *TextureHandler
-	screenWidth        int
-	screenHeight       int
-	camera             *raycaster.Camera
-	scene              *ebiten.Image
-	mapObj             *Map
-	renderScale        float64
-	height             int
-	width              int
-	mapWidth           int
-	mapHeight          int
-	sprites            map[*Sprite]struct{}
-	fovDegrees         float64
-	fovDepth           float64
-	zoomFovDepth       float64
-	renderDistance     float64
-	lightFalloff       float64
-	globalIllumination float64
-	minLightRGB        *color.NRGBA
-	maxLightRGB        *color.NRGBA
-	player             *Player
-	collisionMap       []geom.Line
-	vsync              bool
-	fsr                float64
-	opengl             bool
-	showSpriteBoxes    bool
-	initRenderFloorTex bool
+	tex                  *TextureHandler
+	screenWidth          int
+	screenHeight         int
+	camera               *raycaster.Camera
+	scene                *ebiten.Image
+	mapObj               *Map
+	renderScale          float64
+	height               int
+	width                int
+	mapWidth             int
+	mapHeight            int
+	sprites              map[*Sprite]struct{}
+	fovDegrees           float64
+	fovDepth             float64
+	zoomFovDepth         float64
+	renderDistance       float64
+	lightFalloff         float64
+	globalIllumination   float64
+	minLightRGB          *color.NRGBA
+	maxLightRGB          *color.NRGBA
+	player               *Player
+	collisionMap         []geom.Line
+	vsync                bool
+	fsr                  float64
+	opengl               bool
+	showSpriteBoxes      bool
+	initRenderFloorTex   bool
+	initRenderCeilingTex bool
 }
 
 func NewGame() *Game {
@@ -87,12 +88,10 @@ func NewGame() *Game {
 	g.fovDepth = g.camera.FovDepth()
 
 	g.zoomFovDepth = 2.0
-
-	// set demo lighting settings
-	g.setLightFalloff(-200)
+	g.setLightFalloff(-300)
 	g.setGlobalIllumination(500)
-	minLightRGB := &color.NRGBA{R: 76, G: 76, B: 76, A: 255}
-	maxLightRGB := &color.NRGBA{R: 255, G: 255, B: 255, A: 255}
+	minLightRGB := &color.NRGBA{R: 15, G: 15, B: 15, A: 255}
+	maxLightRGB := &color.NRGBA{R: 180, G: 180, B: 180, A: 255}
 	g.setLightRGB(minLightRGB, maxLightRGB)
 
 	return (g)
@@ -121,6 +120,7 @@ func (g *Game) initConfig() {
 	viper.SetDefault("screen.fsr", 4.0)
 	viper.SetDefault("screen.renderDistance", -1)
 	viper.SetDefault("screen.renderFloor", true)
+	viper.SetDefault("screen.renderCeiling", true)
 	viper.SetDefault("screen.fovDegrees", 68)
 
 	viper.SetDefault("screen.width", 1024)
@@ -147,6 +147,7 @@ func (g *Game) initConfig() {
 	g.opengl = viper.GetBool("screen.opengl")
 	g.renderDistance = viper.GetFloat64("screen.renderDistance")
 	g.initRenderFloorTex = viper.GetBool("screen.renderFloor")
+	g.initRenderCeilingTex = viper.GetBool("screen.renderCeiling")
 	g.showSpriteBoxes = viper.GetBool("showSpriteBoxes")
 }
 
@@ -176,14 +177,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		raycastSprites[index] = sprite
 		index += 1
 	}
-	g.camera.Update(raycastSprites)
-	g.camera.Draw(g.scene)
-	op := &ebiten.DrawImageOptions{}
-	if g.renderScale != 1.0 {
-		op.Filter = ebiten.FilterNearest
-		op.GeoM.Scale(1/g.renderScale, 1/g.renderScale)
+	for depth := 20; depth >= 0; depth-- {
+		g.camera.Update(raycastSprites, depth)
+		g.camera.Draw(g.scene, depth)
+		op := &ebiten.DrawImageOptions{}
+		if g.renderScale != 1.0 {
+			op.Filter = ebiten.FilterNearest
+			op.GeoM.Scale(1/g.renderScale, 1/g.renderScale)
+		}
+		screen.DrawImage(g.scene, op)
 	}
-	screen.DrawImage(g.scene, op)
 
 }
 

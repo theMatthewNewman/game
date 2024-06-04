@@ -34,6 +34,7 @@ func (g *Game) loadContent() {
 	g.tex.textures[7] = getSpriteFromFile("tree_10.png")
 	g.tex.textures[8] = getSpriteFromFile("tree_14.png")
 	g.tex.floorTex = getRGBAFromFile("grass.png")
+	g.tex.ceilingTex = getRGBAFromFile("ceiling.png")
 }
 
 func newImageFromFile(path string) (*ebiten.Image, image.Image, error) {

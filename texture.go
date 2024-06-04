@@ -7,10 +7,12 @@ import (
 )
 
 type TextureHandler struct {
-	mapObj         *Map
-	textures       []*ebiten.Image
-	floorTex       *image.RGBA
-	renderFloorTex bool
+	mapObj           *Map
+	textures         []*ebiten.Image
+	floorTex         *image.RGBA
+	ceilingTex       *image.RGBA
+	renderCeilingTex bool
+	renderFloorTex   bool
 }
 
 func NewTextureHandler(mapObj *Map, textureCapacity int) *TextureHandler {
@@ -75,6 +77,13 @@ func (t *TextureHandler) FloorTextureAt(x, y int) *image.RGBA {
 	// but for this demo we will just be rendering the same texture everywhere.
 	if t.renderFloorTex {
 		return t.floorTex
+	}
+	return nil
+}
+
+func (t *TextureHandler) CeilingTextureAt(x, y, z int) *image.RGBA {
+	if y > 3 && z == 0 {
+		return t.ceilingTex
 	}
 	return nil
 }
