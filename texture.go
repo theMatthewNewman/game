@@ -6,84 +6,77 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+const (
+	numFloorAndCeilingTextures = 9
+	numWallTextures            = 5
+	numSpriteTextures          = 5
+)
+
 type TextureHandler struct {
-	mapObj           *Map
-	textures         []*ebiten.Image
-	floorTex         *image.RGBA
-	ceilingTex       *image.RGBA
-	renderCeilingTex bool
-	renderFloorTex   bool
+	gameLevels              *gameLevels
+	wallTextures            []*ebiten.Image
+	spriteTextures          []*ebiten.Image
+	floorAndCeilingTextures []*image.RGBA
 }
 
-func NewTextureHandler(mapObj *Map, textureCapacity int) *TextureHandler {
+func NewTextureHandler(gameLevels *gameLevels) *TextureHandler {
 	t := &TextureHandler{
-		mapObj:         mapObj,
-		textures:       make([]*ebiten.Image, textureCapacity),
-		renderFloorTex: true,
+		gameLevels:              gameLevels,
+		wallTextures:            make([]*ebiten.Image, numWallTextures),
+		floorAndCeilingTextures: make([]*image.RGBA, numFloorAndCeilingTextures),
+		spriteTextures:          make([]*ebiten.Image, numSpriteTextures),
 	}
+	t.loadTextureFiles()
+	t.loadSprites()
 	return t
 }
 
-func (t *TextureHandler) TextureAt(x, y, levelNum, side int) *ebiten.Image {
+func (t *TextureHandler) TextureAt(x int, y int, levelNum int, side int) *ebiten.Image {
 	texNum := -1
 
-	mapLevel := t.mapObj.Level(levelNum)
-	if mapLevel == nil {
-		return nil
+	mapLevel := t.gameLevels.levelMaps[t.gameLevels.currentLevel]
+
+	if x >= 0 && x < mapLevel.xLength && y >= 0 && y < mapLevel.yLength {
+		texNum = mapLevel.wallMaps[levelNum][x][y] - 1 // 1 subtracted from it so that texture 0 can be used
 	}
-
-	mapWidth := len(mapLevel)
-	if mapWidth == 0 {
-		return nil
-	}
-	mapHeight := len(mapLevel[0])
-	if mapHeight == 0 {
-		return nil
-	}
-
-	if x >= 0 && x < mapWidth && y >= 0 && y < mapHeight {
-		texNum = mapLevel[x][y] - 1 // 1 subtracted from it so that texture 0 can be used
-	}
-
-	if side == 0 {
-		//--some supid hacks to make the houses render correctly--//
-		// this corrects textures on two sides of house since the textures are not symmetrical
-		if texNum == 3 {
-			texNum = 4
-		} else if texNum == 4 {
-			texNum = 3
-		}
-
-		if texNum == 1 {
-			texNum = 4
-		} else if texNum == 2 {
-			texNum = 3
-		}
-
-		// make the ebitengine splash only show on one side
-		if texNum == 5 {
-			texNum = 0
-		}
-	}
-
 	if texNum < 0 {
 		return nil
 	}
-	return t.textures[texNum]
+	return t.wallTextures[texNum]
 }
 
-func (t *TextureHandler) FloorTextureAt(x, y int) *image.RGBA {
-	// x/y could be used to render different floor texture at given coords,
-	// but for this demo we will just be rendering the same texture everywhere.
-	if t.renderFloorTex {
-		return t.floorTex
+func (t *TextureHandler) FloorTextureAt(x, y, z int) *image.RGBA {
+	return t.floorAndCeilingTextures[0]
+	texNum := -1
+
+	mapLevel := t.gameLevels.levelMaps[t.gameLevels.currentLevel]
+
+	if x >= 0 && x < mapLevel.xLength && y >= 0 && y < mapLevel.yLength {
+		texNum = mapLevel.floorMap[x][y] - 1 // 1 subtracted from it so that texture 0 can be used
 	}
-	return nil
+	if texNum < 0 {
+		return nil
+	}
+	return t.floorAndCeilingTextures[texNum]
 }
 
 func (t *TextureHandler) CeilingTextureAt(x, y, z int) *image.RGBA {
-	if y > 3 && z == 0 {
-		return t.ceilingTex
+	texNum := -1
+
+	mapLevel := t.gameLevels.levelMaps[t.gameLevels.currentLevel]
+
+	if x >= 0 && x < mapLevel.xLength && y >= 0 && y < mapLevel.yLength {
+		texNum = mapLevel.ceilingMap[x][y] - 1 // 1 subtracted from it so that texture 0 can be used
+	}
+	if texNum < 0 {
+		return nil
+	}
+	return t.floorAndCeilingTextures[texNum]
+}
+
+func (t *TextureHandler) MidTextureAt(x, y, z int) *image.RGBA {
+	if x == 5 && y == 5 {
+		return t.floorAndCeilingTextures[0]
 	}
 	return nil
 }

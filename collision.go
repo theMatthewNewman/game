@@ -29,7 +29,7 @@ func (g *Game) getValidMove(entity *Entity, moveX, moveY, moveZ float64, checkAl
 	collisionEntities := []*EntityCollision{}
 
 	// check wall collisions
-	for _, borderLine := range g.collisionMap {
+	for _, borderLine := range g.gameLevels.levelMaps[g.gameLevels.currentLevel].collisionMap {
 		// TODO: only check intersection of nearby wall cells instead of all of them
 		if px, py, ok := geom.LineIntersection(moveLine, borderLine); ok {
 			intersectPoints = append(intersectPoints, geom.Vector2{X: px, Y: py})
@@ -64,7 +64,7 @@ func (g *Game) getValidMove(entity *Entity, moveX, moveY, moveZ float64, checkAl
 	}
 
 	// check sprite collisions
-	for sprite := range g.sprites {
+	for sprite := range g.gameLevels.levelMaps[g.gameLevels.currentLevel].sprites {
 		// TODO: only check intersection of nearby sprites instead of all of them
 		if entity == sprite.Entity || entity.Parent == sprite.Entity || entity.CollisionRadius <= 0 || sprite.CollisionRadius <= 0 {
 			continue
@@ -161,23 +161,23 @@ func (g *Game) getValidMove(entity *Entity, moveX, moveY, moveZ float64, checkAl
 
 	switch {
 	case ix < 0 || newX < 0:
-		newX = clipDistance
+		newX = 0.2
 		ix = 0
-	case ix >= g.mapWidth:
-		newX = float64(g.mapWidth) - clipDistance
+	case ix >= g.gameLevels.levelMaps[g.gameLevels.currentLevel].xLength:
+		newX = float64(g.gameLevels.levelMaps[g.gameLevels.currentLevel].xLength) - 0.2
 		ix = int(newX)
 	}
 
 	switch {
 	case iy < 0 || newY < 0:
-		newY = clipDistance
+		newY = 0.2
 		iy = 0
-	case iy >= g.mapHeight:
-		newY = float64(g.mapHeight) - clipDistance
+	case iy >= g.gameLevels.levelMaps[g.gameLevels.currentLevel].yLength:
+		newY = float64(g.gameLevels.levelMaps[g.gameLevels.currentLevel].yLength) - 0.2
 		iy = int(newY)
 	}
 
-	worldMap := g.mapObj.Level(0)
+	worldMap := g.gameLevels.levelMaps[g.gameLevels.currentLevel].wallMaps[0]
 	if worldMap[ix][iy] <= 0 {
 		posX = newX
 		posY = newY

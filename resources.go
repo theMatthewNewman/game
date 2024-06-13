@@ -15,26 +15,34 @@ import (
 //go:embed resources
 var embedded embed.FS
 
+const (
+	texWidth = 256
+)
+
 // loadContent will be called once per game and is the place to load
 // all of your content.
-func (g *Game) loadContent() {
+func (t *TextureHandler) loadTextureFiles() {
 
-	// TODO: make resource management better
+	t.wallTextures[0] = getTextureFromFile("fence.png")
+	t.wallTextures[1] = getTextureFromFile("woodfloor.png")
+	t.wallTextures[2] = getTextureFromFile("slab.png")
+	t.wallTextures[3] = getTextureFromFile("wallpaper.png")
+	t.wallTextures[4] = getTextureFromFile("window1.png")
 
-	// load wall textures
-	g.tex.textures[0] = getTextureFromFile("stone.png")
-	g.tex.textures[1] = getTextureFromFile("left_bot_house.png")
-	g.tex.textures[2] = getTextureFromFile("right_bot_house.png")
-	g.tex.textures[3] = getTextureFromFile("left_top_house.png")
-	g.tex.textures[4] = getTextureFromFile("right_top_house.png")
+	t.floorAndCeilingTextures[0] = getRGBAFromFile("stone.png")
+	t.floorAndCeilingTextures[1] = getRGBAFromFile("woodfloor.png")
+	t.floorAndCeilingTextures[2] = getRGBAFromFile("grass.png")
+	t.floorAndCeilingTextures[3] = getRGBAFromFile("woodfloor.png")
+	t.floorAndCeilingTextures[4] = getRGBAFromFile("woodfloor.png")
+	t.floorAndCeilingTextures[5] = getRGBAFromFile("carpet1.png")
+	t.floorAndCeilingTextures[6] = getRGBAFromFile("carpet2.png")
+	t.floorAndCeilingTextures[7] = getRGBAFromFile("carpet3.png")
+	t.floorAndCeilingTextures[8] = getRGBAFromFile("carpet4.png")
 
-	// separating sprites out a bit from wall textures
-	g.tex.textures[5] = getSpriteFromFile("large_rock.png")
-	g.tex.textures[6] = getSpriteFromFile("tree_09.png")
-	g.tex.textures[7] = getSpriteFromFile("tree_10.png")
-	g.tex.textures[8] = getSpriteFromFile("tree_14.png")
-	g.tex.floorTex = getRGBAFromFile("grass.png")
-	g.tex.ceilingTex = getRGBAFromFile("ceiling.png")
+	t.spriteTextures[0] = getSpriteFromFile("large_rock.png")
+	t.spriteTextures[1] = getSpriteFromFile("couch.png")
+	t.spriteTextures[2] = getSpriteFromFile("couch.png")
+	t.spriteTextures[3] = getSpriteFromFile("couch.png")
 }
 
 func newImageFromFile(path string) (*ebiten.Image, image.Image, error) {
@@ -104,8 +112,9 @@ func getSpriteFromFile(sFile string) *ebiten.Image {
 	return eImg
 }
 
-func (g *Game) loadSprites() {
-	g.sprites = make(map[*Sprite]struct{}, 128)
+func (t *TextureHandler) loadSprites() {
+	currentLevel := t.gameLevels.levelMaps[t.gameLevels.currentLevel]
+	currentLevel.sprites = make(map[*Sprite]struct{}, 128)
 
 	// colors for minimap representation
 	brown := color.RGBA{47, 40, 30, 196}
@@ -113,27 +122,31 @@ func (g *Game) loadSprites() {
 	orange := color.RGBA{69, 30, 5, 196}
 
 	// rock that can be jumped over but not walked through
-	rockImg := g.tex.textures[8]
+	rockImg := t.spriteTextures[0]
 	rockWidth, rockHeight := rockImg.Bounds().Dx(), rockImg.Bounds().Dy()
 	rockScale := 0.4
 	rockPxRadius, rockPxHeight := 24.0, 35.0
 	rockCollisionRadius := (rockScale * rockPxRadius) / float64(rockWidth)
 	rockCollisionHeight := (rockScale * rockPxHeight) / float64(rockHeight)
 	rock := NewSprite(8.0, 5.5, rockScale, rockImg, brown, raycaster.AnchorBottom, rockCollisionRadius, rockCollisionHeight)
-	g.addSprite(rock)
-
-	// testing sprite scaling
-	testScale := 0.5
-	g.addSprite(NewSprite(10.5, 2.5, testScale, g.tex.textures[5], green, raycaster.AnchorBottom, 0, 0))
+	currentLevel.addSprite(rock)
+	rockImg = t.spriteTextures[1]
+	rockWidth, rockHeight = rockImg.Bounds().Dx(), rockImg.Bounds().Dy()
+	rockScale = 0.4
+	rockPxRadius, rockPxHeight = 24.0, 35.0
+	rockCollisionRadius = (rockScale * rockPxRadius) / float64(rockWidth)
+	rockCollisionHeight = (rockScale * rockPxHeight) / float64(rockHeight)
+	rock = NewSprite(8.5, 5.5, rockScale, rockImg, brown, raycaster.AnchorBottom, rockCollisionRadius, rockCollisionHeight)
+	currentLevel.addSprite(rock)
 
 	// // line of trees for testing in front of initial view
 	// Setting CollisionRadius=0 to disable collision against small trees
-	g.addSprite(NewSprite(19.5, 11.5, 1.0, g.tex.textures[6], brown, raycaster.AnchorBottom, 0, 0))
-	g.addSprite(NewSprite(17.5, 11.5, 1.0, g.tex.textures[7], orange, raycaster.AnchorBottom, 0, 0))
-	g.addSprite(NewSprite(15.5, 11.5, 1.0, g.tex.textures[8], green, raycaster.AnchorBottom, 0, 0))
+	currentLevel.addSprite(NewSprite(19.5, 11.5, 1.0, t.spriteTextures[1], brown, raycaster.AnchorBottom, 0, 0))
+	currentLevel.addSprite(NewSprite(17.5, 11.5, 1.0, t.spriteTextures[2], orange, raycaster.AnchorBottom, 0, 0))
+	currentLevel.addSprite(NewSprite(15.5, 11.5, 1.0, t.spriteTextures[3], green, raycaster.AnchorBottom, 0, 0))
 
 }
 
-func (g *Game) addSprite(sprite *Sprite) {
-	g.sprites[sprite] = struct{}{}
+func (m *Map) addSprite(sprite *Sprite) {
+	m.sprites[sprite] = struct{}{}
 }

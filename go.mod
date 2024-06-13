@@ -36,6 +36,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace (
-	github.com/harbdog/raycaster-go => ./raycaster-go
-)
+replace github.com/harbdog/raycaster-go => ./raycaster-go
